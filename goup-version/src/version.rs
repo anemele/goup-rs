@@ -101,7 +101,7 @@ impl Version {
             .map(|v| v.version.trim_start_matches("go").to_string())
             .rev()
             .collect();
-        spinner.finish_with_message("Fetched upstream Go versions");
+        spinner.finish_and_clear();
         Ok(v)
     }
 
@@ -137,7 +137,7 @@ impl Version {
             .nth(0)
             .ok_or_else(|| anyhow!("Getting latest Go version failed"))
             .map(|v| v.to_owned());
-        spinner.finish_with_message("Fetched upstream latest Go version");
+        spinner.finish_and_clear();
         v
     }
 
@@ -225,6 +225,7 @@ impl Version {
             spinner.set_message(format!("Removing {ver} ({}/{})", i + 1, vers.len()));
             Self::remove_go_version(ver)?;
         }
+
         Ok(())
     }
 
