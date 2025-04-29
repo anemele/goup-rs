@@ -4,8 +4,8 @@ pub const GOUP_HOME: &str = "GOUP_HOME";
 pub const GOUP_GO_HOST: &str = "GOUP_GO_HOST";
 pub const GOUP_GO_DOWNLOAD_BASE_URL: &str = "GOUP_GO_DOWNLOAD_BASE_URL";
 
-pub const GO_HOST: &str = "https://golang.google.cn"; // "https://go.dev";
-pub const GO_DOWNLOAD_BASE_URL: &str = "https://golang.google.cn/dl"; //"https://dl.google.com/go";
+pub const GO_HOST: &str = "https://go.dev"; // "https://golang.google.cn";
+pub const GO_DOWNLOAD_BASE_URL: &str = "https://dl.google.com/go";
 
 #[inline]
 fn get_var_or_else(key: &str, val: &str) -> String {

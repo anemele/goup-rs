@@ -1,6 +1,11 @@
-use std::{env, fs, fs::File, io::Read, path::Path};
+use std::io::Write;
+use std::time;
+use std::{fs, fs::File, io::Read, path::Path};
 
-use reqwest::{StatusCode, blocking};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use reqwest::blocking;
+use reqwest::blocking::Client;
+use reqwest::header::CONTENT_LENGTH;
 use sha2::{Digest, Sha256};
 
 use goup_version::Dir;
@@ -14,15 +19,17 @@ impl Downloader {
     pub fn install_go_version(version: &str) -> anyhow::Result<()> {
         let goup_home = Dir::goup_home()?;
         let version_dest_dir = goup_home.version(version);
+
+        let mp = MultiProgress::new();
+        let spinner = mp.add(ProgressBar::new_spinner());
+        spinner.enable_steady_tick(time::Duration::from_millis(100));
+
         // 是否已解压成功并且存在
         if goup_home.is_dot_unpacked_success_file_exists(version) {
-            log::info!(
-                "{}: already installed in {:?}",
-                version,
-                version_dest_dir.display()
-            );
+            spinner.finish_with_message(format!("Already installed {}", version,));
             return Ok(());
         }
+
         // download directory
         let dl_dest_dir = goup_home.cache();
         // 压缩包文件名称
@@ -31,6 +38,7 @@ impl Downloader {
         let archive_sha256_filename = consts::archive_sha256(&archive_filename);
         // 压缩包url
         let (archive_url, archive_sha256_url) = consts::archive_url(&archive_filename);
+
         if !dl_dest_dir.exists() {
             log::debug!("Create download directory");
             fs::create_dir_all(&dl_dest_dir)?
@@ -39,48 +47,30 @@ impl Downloader {
         // 压缩包文件
         let archive_file = dl_dest_dir.join_path(archive_filename);
         let archive_sha256_file = dl_dest_dir.join_path(archive_sha256_filename);
-        if !archive_file.exists()
-            || !archive_sha256_file.exists()
-            || Self::verify_archive_file_sha256(&archive_file, &archive_sha256_file).is_err()
-        {
-            log::debug!(
-                "Download archive file from {} to {}",
-                archive_url,
-                archive_file.display(),
-            );
+
+        if !archive_file.exists() || !archive_sha256_file.exists() {
             // 下载压缩包
-            Self::download_archive(&archive_file, &archive_url)?;
-            log::debug!("Check archive file content length");
-            // 压缩包长度
-            let archive_content_length =
-                Self::get_upstream_archive_content_length(version, &archive_url)?;
-            // 检查大小
-            let got_archive_content_length = archive_file.metadata()?.len();
-            if got_archive_content_length != archive_content_length {
-                anyhow::bail!(
-                    "downloaded file {} size {} doesn't match server size {}",
-                    archive_file.display(),
-                    got_archive_content_length,
-                    archive_content_length,
-                );
-            }
+            spinner.set_message(format!("Downloading {}", archive_url));
+            Self::download_archive(&mp, &archive_file, &archive_url)?;
+
             // 下载压缩包sha256
-            log::debug!(
-                "Download archive sha256 file from {} to {}",
-                archive_sha256_url,
-                archive_sha256_file.display()
-            );
+            spinner.set_message(format!("Downloading {}", archive_sha256_url));
             Self::download_archive_sha256(&archive_sha256_file, &archive_sha256_url)?;
-            // 校验压缩包sha256
-            Self::verify_archive_file_sha256(&archive_file, &archive_sha256_file)?;
+        }
+
+        // 校验压缩包sha256
+        spinner.set_message(format!(
+            "Verifying SHA256 {}",
+            archive_sha256_file.display()
+        ));
+        let ok = Self::verify_archive_file_sha256(&archive_file, &archive_sha256_file)?;
+        if !ok {
+            // TODO: here should remove the bad archive_file.
+            anyhow::bail!("NOT match");
         }
 
         // 解压
-        log::info!(
-            "Unpacking {} to {} ...",
-            archive_file.display(),
-            version_dest_dir.display()
-        );
+        spinner.set_message(format!("Unpacking {} ...", archive_file.display()));
         if !version_dest_dir.exists() {
             log::debug!("Create version directory: {}", version_dest_dir.display());
             fs::create_dir_all(&version_dest_dir)?
@@ -89,55 +79,67 @@ impl Downloader {
             .to_string_lossy()
             .parse::<Unpack>()?
             .unpack(&version_dest_dir, &archive_file)?;
+        spinner.finish_and_clear();
+
         // 设置解压成功
         goup_home.create_dot_unpacked_success_file(version)?;
-        log::info!("{} installed in {}", version, version_dest_dir.display());
-        Ok(())
-    }
+        spinner.finish_with_message(format!("Installed {}", version));
 
-    /// get_upstream_archive_content_length 获取上游压缩包文件长度
-    fn get_upstream_archive_content_length(
-        version: &str,
-        archive_url: &str,
-    ) -> anyhow::Result<u64> {
-        let resp = blocking::Client::builder()
-            .build()?
-            .head(archive_url)
-            .send()?;
-        if resp.status() == StatusCode::NOT_FOUND {
-            anyhow::bail!(
-                "no binary release of {} for {}/{} at {}",
-                version,
-                env::consts::OS,
-                env::consts::ARCH,
-                archive_url,
-            );
-        }
-        if !resp.status().is_success() {
-            anyhow::bail!(
-                "server returned {} checking size of {}",
-                resp.status().canonical_reason().unwrap_or_default(),
-                archive_url,
-            );
-        }
-        let content_length = if let Some(header_value) = resp.headers().get("Content-Length") {
-            header_value.to_str()?.parse()?
-        } else {
-            0
-        };
-        Ok(content_length)
+        Ok(())
     }
 
     /// download_archive 下载压缩包
-    fn download_archive<P: AsRef<Path>>(dest: P, archive_url: &str) -> anyhow::Result<()> {
-        let mut response = blocking::get(archive_url)?;
-        if !response.status().is_success() {
-            anyhow::bail!("Downloading archive failure");
+    fn download_archive<P: AsRef<Path>>(
+        mp: &MultiProgress,
+        dest: P,
+        archive_url: &str,
+    ) -> anyhow::Result<()> {
+        let client = Client::new();
+
+        let resp = client
+            .head(archive_url)
+            .header("User-Agent", "GOUP Client")
+            .timeout(time::Duration::from_secs(10))
+            .send()?;
+        let headers = resp.headers();
+        let content_length = headers
+            .get(CONTENT_LENGTH)
+            .unwrap()
+            .to_str()?
+            .parse::<u64>()?;
+
+        let pb = mp.add(ProgressBar::new(content_length));
+        pb.set_style(
+            ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")?
+            .progress_chars("#>-"));
+        pb.enable_steady_tick(time::Duration::from_millis(100));
+
+        let mut cache_file = fs::File::create(dest)?;
+
+        let mut start = 0;
+        const CHUNK_SIZE: u64 = 1024 * 1024;
+        while start < content_length {
+            let end = start + CHUNK_SIZE;
+            let range = format!("bytes={}-{}", start, end);
+            let buf = client
+                .get(archive_url)
+                .header("User-Agent", "GOUP Client")
+                .header("Range", range)
+                .timeout(time::Duration::from_secs(30))
+                .send()?
+                .bytes()?;
+            cache_file.write(&buf)?;
+            pb.inc(buf.len() as u64);
+            start = end + 1;
         }
-        let mut file = File::create(dest)?;
-        response.copy_to(&mut file)?;
+
+        pb.finish_and_clear();
+        mp.remove(&pb);
+
         Ok(())
     }
+
     /// download_archive_sha256 下载压缩包sha256
     fn download_archive_sha256<P: AsRef<Path>>(
         dest: P,
@@ -171,7 +173,7 @@ impl Downloader {
     fn verify_archive_file_sha256<P1, P2>(
         archive_file: P1,
         archive_sha256_file: P2,
-    ) -> anyhow::Result<()>
+    ) -> anyhow::Result<bool>
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>,
@@ -179,13 +181,7 @@ impl Downloader {
         let expect_sha256 = fs::read_to_string(archive_sha256_file)?;
         let expect_sha256 = expect_sha256.trim();
         let got_sha256 = Self::compute_file_sha256(&archive_file)?;
-        if expect_sha256 != got_sha256 {
-            anyhow::bail!(
-                "{} corrupt? does not have expected SHA-256 of {}",
-                archive_file.as_ref().display(),
-                expect_sha256,
-            );
-        }
-        Ok(())
+
+        Ok(expect_sha256 == got_sha256)
     }
 }

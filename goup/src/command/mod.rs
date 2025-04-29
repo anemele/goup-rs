@@ -97,7 +97,7 @@ pub struct Cli {
 #[non_exhaustive] // 表明未来还有其它元素添加
 enum Command {
     /// Install Go with a version
-    #[command(visible_alias = "update")]
+    #[command(visible_aliases = ["i", "add"])]
     Install(Install),
     /// List all installed Go
     #[command(visible_aliases = ["ls", "show"])]

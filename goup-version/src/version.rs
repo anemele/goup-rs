@@ -83,14 +83,9 @@ impl Version {
             .collect())
     }
 
-    /// list upstream go versions if get go version failure from http then fallback use git.
-    pub fn list_upstream_go_versions(host: &str) -> anyhow::Result<Vec<String>> {
-        Self::list_upstream_go_versions_from_http(host)
-    }
-
     /// list upstream go versions from http.
-    fn list_upstream_go_versions_from_http(host: &str) -> anyhow::Result<Vec<String>> {
-        Ok(Client::builder()
+    pub fn list_upstream_go_versions(host: &str) -> anyhow::Result<Vec<String>> {
+        let v = Client::builder()
             .timeout(HTTP_TIMEOUT)
             .build()?
             .get(format!("{}/dl/?mode=json&include=all", host))
@@ -99,7 +94,8 @@ impl Version {
             .into_iter()
             .map(|v| v.version.trim_start_matches("go").to_string())
             .rev()
-            .collect())
+            .collect();
+        Ok(v)
     }
 
     pub fn match_version_req(host: &str, ver_pattern: &str) -> anyhow::Result<String> {
@@ -171,6 +167,7 @@ impl Version {
         if !original.exists() {
             anyhow::bail!("Go version {version} is not installed. Install it with `goup install`.");
         }
+
         let link = goup_home.current();
         let _ = fs::remove_dir_all(&link);
         #[cfg(unix)]
@@ -182,40 +179,32 @@ impl Version {
         {
             junction::create(original, &link)?;
         }
-        log::info!("Default Go is set to '{version}'");
+
+        println!("Default Go is set to '{version}'");
         Ok(())
     }
+
     /// remove the go version, if it is current active go version, will ignore deletion.
     pub fn remove_go_version(version: &str) -> anyhow::Result<()> {
         let version = Self::normalize(version);
-        let cur = Self::current_go_version()?;
-        if Some(&version) == cur.as_ref() {
-            log::warn!("{} is current active version,  ignore deletion!", version);
-        } else {
-            let version_dir = Dir::goup_home()?.version(version);
-            if version_dir.exists() {
-                fs::remove_dir_all(&version_dir)?;
+        let version_dir = Dir::goup_home()?.version(&version);
+        if version_dir.exists() {
+            fs::remove_dir_all(&version_dir)?;
+        }
+
+        if let Some(cur) = Self::current_go_version()? {
+            if cur == version {
+                log::warn!("{} is the active version.", version);
             }
         }
+
         Ok(())
     }
 
     /// remove multiple go version, if it is current active go version, will ignore deletion.
     pub fn remove_go_versions(vers: &[&str]) -> anyhow::Result<()> {
-        if !vers.is_empty() {
-            let goup_home = Dir::goup_home()?;
-            let cur = Self::current_go_version()?;
-            for ver in vers {
-                let version = Self::normalize(ver);
-                if Some(&version) == cur.as_ref() {
-                    log::warn!("{} is current active version, ignore deletion!", ver);
-                    continue;
-                }
-                let version_dir = goup_home.version(&version);
-                if version_dir.exists() {
-                    fs::remove_dir_all(&version_dir)?;
-                }
-            }
+        for ver in vers {
+            Self::remove_go_version(ver)?;
         }
         Ok(())
     }
