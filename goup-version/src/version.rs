@@ -1,10 +1,12 @@
 use std::fs;
 use std::fs::DirEntry;
 use std::ops::Deref;
+use std::time;
 use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::anyhow;
+use indicatif::ProgressBar;
 use regex::Regex;
 use reqwest::blocking::Client;
 use semver::Op;
@@ -85,6 +87,10 @@ impl Version {
 
     /// list upstream go versions from http.
     pub fn list_upstream_go_versions(host: &str) -> anyhow::Result<Vec<String>> {
+        let spinner = ProgressBar::new_spinner();
+        spinner.enable_steady_tick(time::Duration::from_millis(100));
+
+        spinner.set_message("Fetching upstream Go versions");
         let v = Client::builder()
             .timeout(HTTP_TIMEOUT)
             .build()?
@@ -95,6 +101,7 @@ impl Version {
             .map(|v| v.version.trim_start_matches("go").to_string())
             .rev()
             .collect();
+        spinner.finish_with_message("Fetched upstream Go versions");
         Ok(v)
     }
 
@@ -115,17 +122,25 @@ impl Version {
 
     /// get upstream latest go version.
     pub fn get_upstream_latest_go_version(host: &str) -> anyhow::Result<String> {
+        let spinner = ProgressBar::new_spinner();
+        spinner.enable_steady_tick(time::Duration::from_millis(100));
+
+        spinner.set_message("Fetching upstream latest Go version");
         let body = Client::builder()
             .timeout(HTTP_TIMEOUT)
             .build()?
             .get(format!("{}/VERSION?m=text", host))
             .send()?
             .text()?;
-        body.split('\n')
+        let v = body
+            .split('\n')
             .nth(0)
             .ok_or_else(|| anyhow!("Getting latest Go version failed"))
-            .map(|v| v.to_owned())
+            .map(|v| v.to_owned());
+        spinner.finish_with_message("Fetched upstream latest Go version");
+        v
     }
+
     /// list locally installed go version.
     pub fn list_go_version() -> anyhow::Result<Vec<Version>> {
         let goup_home = Dir::goup_home()?;
@@ -203,7 +218,11 @@ impl Version {
 
     /// remove multiple go version, if it is current active go version, will ignore deletion.
     pub fn remove_go_versions(vers: &[&str]) -> anyhow::Result<()> {
-        for ver in vers {
+        let spinner = ProgressBar::new_spinner();
+        spinner.enable_steady_tick(time::Duration::from_millis(100));
+
+        for (i, ver) in vers.iter().enumerate() {
+            spinner.set_message(format!("Removing {ver} ({}/{})", i + 1, vers.len()));
             Self::remove_go_version(ver)?;
         }
         Ok(())

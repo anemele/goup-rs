@@ -59,10 +59,7 @@ impl Downloader {
         }
 
         // 校验压缩包sha256
-        spinner.set_message(format!(
-            "Verifying SHA256 {}",
-            archive_sha256_file.display()
-        ));
+        spinner.set_message(format!("Verifying {}", archive_sha256_file.display()));
         let ok = Self::verify_archive_file_sha256(&archive_file, &archive_sha256_file)?;
         if !ok {
             // TODO: here should remove the bad archive_file.
@@ -70,7 +67,7 @@ impl Downloader {
         }
 
         // 解压
-        spinner.set_message(format!("Unpacking {} ...", archive_file.display()));
+        spinner.set_message(format!("Unpacking {}", archive_file.display()));
         if !version_dest_dir.exists() {
             log::debug!("Create version directory: {}", version_dest_dir.display());
             fs::create_dir_all(&version_dest_dir)?

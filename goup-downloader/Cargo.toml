@@ -19,8 +19,9 @@ anyhow.workspace = true
 log.workspace = true
 reqwest.workspace = true
 which.workspace = true
+indicatif.workspace = true
+
 sha2 = "0.10"
 flate2 = "1.1"
 tar = "0.4"
 zip = "2.6"
-indicatif = "0.17.8"
