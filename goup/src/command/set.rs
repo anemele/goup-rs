@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use clap::Args;
 use dialoguer::{Select, theme::ColorfulTheme};
 
@@ -14,16 +13,14 @@ pub struct Set {
 }
 
 impl Run for Set {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         if let Some(version) = &self.version {
             return Version::set_go_version(version);
         }
 
         let vers = Version::list_go_version()?;
         if vers.is_empty() {
-            return Err(anyhow!(
-                "Not any go is installed, Install it with `goup install`."
-            ));
+            anyhow::bail!("Not any go is installed, Install it with `goup install`.");
         }
 
         let mut items = Vec::new();

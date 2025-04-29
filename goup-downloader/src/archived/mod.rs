@@ -12,7 +12,7 @@ use zip::Zip;
 /// such as zip,tar.gz.
 pub trait Unpacker {
     /// unpack the provided archive file to dest_dir.
-    fn unpack<P1, P2>(dest_dir: P1, archive_file: P2) -> Result<(), anyhow::Error>
+    fn unpack<P1, P2>(dest_dir: P1, archive_file: P2) -> anyhow::Result<()>
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>;
@@ -39,7 +39,7 @@ impl FromStr for Unpack {
 }
 
 impl Unpack {
-    pub(crate) fn unpack<P1, P2>(&self, dest_dir: P1, archive_file: P2) -> Result<(), anyhow::Error>
+    pub(crate) fn unpack<P1, P2>(&self, dest_dir: P1, archive_file: P2) -> anyhow::Result<()>
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>,

@@ -42,9 +42,6 @@ temp-env = "0.3"
 unsafe_code = "forbid"
 # unused = "allow" # for experimental dev
 
-[profile.dev.package."*"]
-opt-level = "z"
-
 [profile.release]
 opt-level = "z"
 strip = true

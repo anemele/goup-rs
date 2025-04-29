@@ -15,7 +15,7 @@ fn print_env(key: &str, value: &str) {
 }
 
 impl Run for Env {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         print_env(
             consts::GOUP_HOME,
             &Dir::goup_home().unwrap_or_default().to_string_lossy(),

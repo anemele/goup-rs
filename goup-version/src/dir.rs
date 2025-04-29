@@ -17,7 +17,7 @@ pub struct Dir {
 
 impl Dir {
     /// Returns the path to the user's home directory.
-    pub fn home_dir() -> Result<PathBuf, anyhow::Error> {
+    pub fn home_dir() -> anyhow::Result<PathBuf> {
         dirs::home_dir().ok_or_else(|| anyhow!("home dir get failed"))
     }
     /// Allocates a Dir as `${path}/.goup`
@@ -27,7 +27,7 @@ impl Dir {
         Self { path }
     }
     /// Allocates a `GOUP_HOME` Dir as Environment Or `${HOME}/.goup`
-    pub fn goup_home() -> Result<Self, anyhow::Error> {
+    pub fn goup_home() -> anyhow::Result<Self> {
         env::var(GOUP_HOME)
             .ok()
             .filter(|s| !s.is_empty())
@@ -96,7 +96,7 @@ impl Dir {
         self.version_dot_unpacked_success(&ver).exists()
     }
     /// create `${path}/.goup/{version}/.unpacked-success` file
-    pub fn create_dot_unpacked_success_file<P>(&self, ver: P) -> Result<(), anyhow::Error>
+    pub fn create_dot_unpacked_success_file<P>(&self, ver: P) -> anyhow::Result<()>
     where
         P: AsRef<Path>,
     {
@@ -198,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn test_dot_unpacked_success_file() -> Result<(), anyhow::Error> {
+    fn test_dot_unpacked_success_file() -> anyhow::Result<()> {
         let tmp_home_dir = tempfile::tempdir()?;
         let tmp_goup_home = Dir::new(tmp_home_dir);
         println!("{}", tmp_goup_home.display());

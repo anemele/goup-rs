@@ -13,7 +13,7 @@ pub struct Remove {
 }
 
 impl Run for Remove {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         if !self.version.is_empty() {
             let vers = self
                 .version

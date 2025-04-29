@@ -1,6 +1,5 @@
 use std::{env, fs, fs::File, io::Read, path::Path};
 
-use anyhow::anyhow;
 use reqwest::{StatusCode, blocking};
 use sha2::{Digest, Sha256};
 
@@ -12,7 +11,7 @@ use crate::archived::Unpack;
 pub struct Downloader;
 
 impl Downloader {
-    pub fn install_go_version(version: &str) -> Result<(), anyhow::Error> {
+    pub fn install_go_version(version: &str) -> anyhow::Result<()> {
         let goup_home = Dir::goup_home()?;
         let version_dest_dir = goup_home.version(version);
         // 是否已解压成功并且存在
@@ -58,12 +57,12 @@ impl Downloader {
             // 检查大小
             let got_archive_content_length = archive_file.metadata()?.len();
             if got_archive_content_length != archive_content_length {
-                return Err(anyhow!(
+                anyhow::bail!(
                     "downloaded file {} size {} doesn't match server size {}",
                     archive_file.display(),
                     got_archive_content_length,
                     archive_content_length,
-                ));
+                );
             }
             // 下载压缩包sha256
             log::debug!(
@@ -100,26 +99,26 @@ impl Downloader {
     fn get_upstream_archive_content_length(
         version: &str,
         archive_url: &str,
-    ) -> Result<u64, anyhow::Error> {
+    ) -> anyhow::Result<u64> {
         let resp = blocking::Client::builder()
             .build()?
             .head(archive_url)
             .send()?;
         if resp.status() == StatusCode::NOT_FOUND {
-            return Err(anyhow!(
+            anyhow::bail!(
                 "no binary release of {} for {}/{} at {}",
                 version,
                 env::consts::OS,
                 env::consts::ARCH,
                 archive_url,
-            ));
+            );
         }
         if !resp.status().is_success() {
-            return Err(anyhow!(
+            anyhow::bail!(
                 "server returned {} checking size of {}",
                 resp.status().canonical_reason().unwrap_or_default(),
                 archive_url,
-            ));
+            );
         }
         let content_length = if let Some(header_value) = resp.headers().get("Content-Length") {
             header_value.to_str()?.parse()?
@@ -130,10 +129,10 @@ impl Downloader {
     }
 
     /// download_archive 下载压缩包
-    fn download_archive<P: AsRef<Path>>(dest: P, archive_url: &str) -> Result<(), anyhow::Error> {
+    fn download_archive<P: AsRef<Path>>(dest: P, archive_url: &str) -> anyhow::Result<()> {
         let mut response = blocking::get(archive_url)?;
         if !response.status().is_success() {
-            return Err(anyhow!("Downloading archive failure"));
+            anyhow::bail!("Downloading archive failure");
         }
         let mut file = File::create(dest)?;
         response.copy_to(&mut file)?;
@@ -143,10 +142,10 @@ impl Downloader {
     fn download_archive_sha256<P: AsRef<Path>>(
         dest: P,
         archive_sha256_url: &str,
-    ) -> Result<(), anyhow::Error> {
+    ) -> anyhow::Result<()> {
         let mut response = blocking::get(archive_sha256_url)?;
         if !response.status().is_success() {
-            return Err(anyhow!("Downloading archive failure"));
+            anyhow::bail!("Downloading archive failure");
         }
         let mut file = File::create(dest)?;
         response.copy_to(&mut file)?;
@@ -154,7 +153,7 @@ impl Downloader {
     }
 
     /// compute_file_sha256 计算文件的sha256
-    fn compute_file_sha256<P: AsRef<Path>>(path: P) -> Result<String, anyhow::Error> {
+    fn compute_file_sha256<P: AsRef<Path>>(path: P) -> anyhow::Result<String> {
         let mut context = Sha256::new();
         let mut file = File::open(path)?;
         let mut buffer = [0; 4096]; // 定义一个缓冲区来处理字节流数据
@@ -172,7 +171,7 @@ impl Downloader {
     fn verify_archive_file_sha256<P1, P2>(
         archive_file: P1,
         archive_sha256_file: P2,
-    ) -> Result<(), anyhow::Error>
+    ) -> anyhow::Result<()>
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>,
@@ -181,11 +180,11 @@ impl Downloader {
         let expect_sha256 = expect_sha256.trim();
         let got_sha256 = Self::compute_file_sha256(&archive_file)?;
         if expect_sha256 != got_sha256 {
-            return Err(anyhow!(
+            anyhow::bail!(
                 "{} corrupt? does not have expected SHA-256 of {}",
                 archive_file.as_ref().display(),
                 expect_sha256,
-            ));
+            );
         }
         Ok(())
     }

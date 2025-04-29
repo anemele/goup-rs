@@ -31,7 +31,7 @@ enum Command {
 }
 
 impl Run for Cache {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         match self.command {
             Command::Show { contain_sha256 } => {
                 for v in Version::list_cache(contain_sha256)? {

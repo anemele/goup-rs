@@ -9,7 +9,7 @@ const SETUP_ENV_UNIX: &str = include_str!("../../setup_env_unix");
 pub struct Init;
 
 impl Run for Init {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         Version::init_env(SETUP_ENV_UNIX)?;
         Ok(())
     }

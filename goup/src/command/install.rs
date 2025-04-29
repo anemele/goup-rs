@@ -23,7 +23,7 @@ pub struct Install {
 }
 
 impl Run for Install {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         let version = match self.toolchain.parse()? {
             Toolchain::Stable => Version::get_upstream_latest_go_version(&self.host)?,
             Toolchain::Unstable => {

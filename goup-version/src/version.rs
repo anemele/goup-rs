@@ -45,7 +45,7 @@ pub struct Version {
 
 impl Version {
     /// initializes the environment file.
-    pub fn init_env(s: &str) -> Result<(), anyhow::Error> {
+    pub fn init_env(s: &str) -> anyhow::Result<()> {
         let goup_home = Dir::goup_home()?;
         if !goup_home.exists() {
             fs::create_dir_all(&goup_home)?;
@@ -57,7 +57,7 @@ impl Version {
     pub fn list_upstream_go_versions_filter(
         host: &str,
         filter: Option<ToolchainFilter>,
-    ) -> Result<Vec<String>, anyhow::Error> {
+    ) -> anyhow::Result<Vec<String>> {
         let ver = Self::list_upstream_go_versions(host)?;
         let re = filter.map_or_else(
             || "(.+)".to_owned(),
@@ -84,12 +84,12 @@ impl Version {
     }
 
     /// list upstream go versions if get go version failure from http then fallback use git.
-    pub fn list_upstream_go_versions(host: &str) -> Result<Vec<String>, anyhow::Error> {
+    pub fn list_upstream_go_versions(host: &str) -> anyhow::Result<Vec<String>> {
         Self::list_upstream_go_versions_from_http(host)
     }
 
     /// list upstream go versions from http.
-    fn list_upstream_go_versions_from_http(host: &str) -> Result<Vec<String>, anyhow::Error> {
+    fn list_upstream_go_versions_from_http(host: &str) -> anyhow::Result<Vec<String>> {
         Ok(Client::builder()
             .timeout(HTTP_TIMEOUT)
             .build()?
@@ -102,7 +102,7 @@ impl Version {
             .collect())
     }
 
-    pub fn match_version_req(host: &str, ver_pattern: &str) -> Result<String, anyhow::Error> {
+    pub fn match_version_req(host: &str, ver_pattern: &str) -> anyhow::Result<String> {
         log::debug!("version request pattern: {}", ver_pattern);
         let ver_req = VersionReq::parse(ver_pattern)?;
         // 是否是精确匹配, 如果是则直接返回
@@ -118,7 +118,7 @@ impl Version {
     }
 
     /// get upstream latest go version.
-    pub fn get_upstream_latest_go_version(host: &str) -> Result<String, anyhow::Error> {
+    pub fn get_upstream_latest_go_version(host: &str) -> anyhow::Result<String> {
         let body = Client::builder()
             .timeout(HTTP_TIMEOUT)
             .build()?
@@ -131,7 +131,7 @@ impl Version {
             .map(|v| v.to_owned())
     }
     /// list locally installed go version.
-    pub fn list_go_version() -> Result<Vec<Version>, anyhow::Error> {
+    pub fn list_go_version() -> anyhow::Result<Vec<Version>> {
         let goup_home = Dir::goup_home()?;
         // may be .goup not exist
         if !goup_home.exists() {
@@ -164,14 +164,12 @@ impl Version {
     }
 
     /// set active go version
-    pub fn set_go_version(version: &str) -> Result<(), anyhow::Error> {
+    pub fn set_go_version(version: &str) -> anyhow::Result<()> {
         let version = Self::normalize(version);
         let goup_home = Dir::goup_home()?;
         let original = goup_home.version_go(&version);
         if !original.exists() {
-            return Err(anyhow!(
-                "Go version {version} is not installed. Install it with `goup install`."
-            ));
+            anyhow::bail!("Go version {version} is not installed. Install it with `goup install`.");
         }
         let link = goup_home.current();
         let _ = fs::remove_dir_all(&link);
@@ -188,7 +186,7 @@ impl Version {
         Ok(())
     }
     /// remove the go version, if it is current active go version, will ignore deletion.
-    pub fn remove_go_version(version: &str) -> Result<(), anyhow::Error> {
+    pub fn remove_go_version(version: &str) -> anyhow::Result<()> {
         let version = Self::normalize(version);
         let cur = Self::current_go_version()?;
         if Some(&version) == cur.as_ref() {
@@ -203,7 +201,7 @@ impl Version {
     }
 
     /// remove multiple go version, if it is current active go version, will ignore deletion.
-    pub fn remove_go_versions(vers: &[&str]) -> Result<(), anyhow::Error> {
+    pub fn remove_go_versions(vers: &[&str]) -> anyhow::Result<()> {
         if !vers.is_empty() {
             let goup_home = Dir::goup_home()?;
             let cur = Self::current_go_version()?;
@@ -223,7 +221,7 @@ impl Version {
     }
 
     /// current active go version
-    pub fn current_go_version() -> Result<Option<String>, anyhow::Error> {
+    pub fn current_go_version() -> anyhow::Result<Option<String>> {
         // may be current not exist
         let current = Dir::goup_home()?.current().read_link().ok().and_then(|p| {
             p.parent()
@@ -233,7 +231,7 @@ impl Version {
     }
 
     /// list `${HOME}/.goup/cache` directory items(only file, ignore directory).
-    pub fn list_cache(contain_sha256: bool) -> Result<Vec<String>, anyhow::Error> {
+    pub fn list_cache(contain_sha256: bool) -> anyhow::Result<Vec<String>> {
         let goup_home = Dir::goup_home()?;
         // may be .goup or .goup/cache not exist
         if !goup_home.exists() || !goup_home.cache().exists() {
@@ -256,7 +254,7 @@ impl Version {
     }
 
     /// remove `${HOME}/.goup/cache` directory.
-    pub fn remove_cache() -> Result<(), anyhow::Error> {
+    pub fn remove_cache() -> anyhow::Result<()> {
         let dl_dir = Dir::goup_home()?.cache();
         if dl_dir.exists() {
             fs::remove_dir_all(&dl_dir)?;
@@ -265,7 +263,7 @@ impl Version {
     }
 
     /// remove `${HOME}/.goup` directory.
-    pub fn remove_goup_home() -> Result<(), anyhow::Error> {
+    pub fn remove_goup_home() -> anyhow::Result<()> {
         let goup_home_dir = Dir::goup_home()?;
         if goup_home_dir.exists() {
             fs::remove_dir_all(&goup_home_dir)?;

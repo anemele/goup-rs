@@ -1,6 +1,6 @@
 // use git2::{Direction, Remote};
 
-fn main() -> Result<(), anyhow::Error> {
+fn main() -> anyhow::Result<()> {
     Ok(())
 }
 

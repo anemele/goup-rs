@@ -10,7 +10,7 @@ use super::Unpacker;
 pub(crate) struct Zip;
 
 impl Unpacker for Zip {
-    fn unpack<P1, P2>(dest_dir: P1, archive_file: P2) -> Result<(), anyhow::Error>
+    fn unpack<P1, P2>(dest_dir: P1, archive_file: P2) -> anyhow::Result<()>
     where
         P1: AsRef<Path>,
         P2: AsRef<Path>,

@@ -61,7 +61,7 @@ BuildArch:       {}"#,
 
 // run command.
 pub trait Run {
-    fn run(&self) -> Result<(), anyhow::Error>;
+    fn run(&self) -> anyhow::Result<()>;
 }
 
 #[derive(Args, Debug, PartialEq)]
@@ -124,7 +124,7 @@ enum Command {
 }
 
 impl Run for Cli {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         let level_filter = self.global.log_filter_level();
         env_logger::builder()
             .format(move |buf, record| {

@@ -17,7 +17,7 @@ pub struct Search {
 }
 
 impl Run for Search {
-    fn run(&self) -> Result<(), anyhow::Error> {
+    fn run(&self) -> anyhow::Result<()> {
         let filter = self.filter.as_ref().and_then(|s| s.parse().ok());
         let remote_versions = Version::list_upstream_go_versions_filter(&self.host, filter)?;
 
