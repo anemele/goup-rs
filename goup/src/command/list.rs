@@ -1,5 +1,5 @@
 use clap::Args;
-use colored::{Colorize, control::set_virtual_terminal};
+use colored::Colorize;
 use which::which;
 
 use super::Run;
@@ -17,8 +17,8 @@ impl Run for List {
                 println!(" Using system Go {}.", go_bin.to_string_lossy());
             }
         } else {
-            #[cfg(target_family = "windows")]
-            set_virtual_terminal(true).unwrap();
+            #[cfg(windows)]
+            colored::control::set_virtual_terminal(true).unwrap();
 
             for v in vers {
                 if v.active {

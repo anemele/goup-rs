@@ -129,7 +129,7 @@ impl Downloader {
                 .timeout(time::Duration::from_secs(30))
                 .send()?
                 .bytes()?;
-            cache_file.write(&buf)?;
+            cache_file.write_all(&buf)?;
             pb.inc(buf.len() as u64);
             start = end + 1;
         }

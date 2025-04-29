@@ -8,9 +8,9 @@ pub struct Env;
 
 #[inline]
 fn print_env(key: &str, value: &str) {
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     println!("set {}={}", key, value);
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     println!("{}={}", key, value);
 }
 

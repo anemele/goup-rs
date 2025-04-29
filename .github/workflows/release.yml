@@ -21,51 +21,47 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu
-            name: .tar.gz
+            os: ubuntu-latest
+            ext: .tar.gz
 
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: .tar.gz
-
-          - target: i686-unknown-linux-musl
-            os: ubuntu-latest
-            name: .tar.gz
+            ext: .tar.gz
 
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            name: .tar.gz
+            ext: .tar.gz
 
           - target: arm-unknown-linux-musleabihf
             os: ubuntu-latest
-            name: .tar.gz
+            ext: .tar.gz
 
           - target: x86_64-apple-darwin
             os: macos-13
-            name: .tar.gz
+            ext: .tar.gz
 
           - target: aarch64-apple-darwin
             os: macos-14
-            name: .tar.gz
+            ext: .tar.gz
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            name: .zip
+            ext: .zip
             rustflags: -C target-feature=+crt-static
 
           - target: i686-pc-windows-msvc
             os: windows-latest
-            name: .zip
+            ext: .zip
             rustflags: -C target-feature=+crt-static
 
           - target: aarch64-pc-windows-msvc
             os: windows-latest
-            name: .zip
+            ext: .zip
             rustflags: -C target-feature=+crt-static
 
           - target: x86_64-unknown-freebsd
             os: ubuntu-latest
-            name: .tar.gz
+            ext: .tar.gz
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -119,21 +115,22 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../goup-${{ matrix.target }}${{ env.VERSION }}${{ matrix.name }} goup.exe
+          7z a ../../../goup-${{ matrix.target }}${{ matrix.ext }} goup.exe
           cd -
 
       - name: Post Build | Prepare artifacts [-nix]
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          tar -czvf ../../../goup-${{ matrix.target }}${{ env.VERSION }}${{ matrix.name }} goup
+          chmod +x goup
+          tar -czvf ../../../goup-${{ matrix.target }}${{ matrix.ext }} goup
           cd -
 
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: ${{ matrix.name }}
+          name: goup-${{ env.VERSION }}-${{ matrix.target }}${{ matrix.ext }}
+          path: goup-${{ matrix.target }}${{ matrix.ext }}
 
       - name: Release | Upload installer artifacts [Windows]
         continue-on-error: true
@@ -141,7 +138,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: goup-${{ matrix.target }}.msi
-          path: target/wix/goup-${{ matrix.target }}${{ env.VERSION }}.msi
+          path: target/wix/goup-${{ env.VERSION }}-${{ matrix.target }}.msi
 
       - name: Generate a changelog [Changelog]
         uses: orhun/git-cliff-action@v4

@@ -27,6 +27,9 @@ impl Run for Search {
             v_a_map.insert(v.version, v.active);
         }
 
+        #[cfg(windows)]
+        colored::control::set_virtual_terminal(true).unwrap();
+
         for v in remote_versions {
             if !v_a_map.contains_key(&v) {
                 println!("  {}", v);
