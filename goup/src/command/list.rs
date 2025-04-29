@@ -1,5 +1,5 @@
 use clap::Args;
-use prettytable::{Table, row};
+use colored::{Colorize, control::set_virtual_terminal};
 use which::which;
 
 use super::Run;
@@ -12,26 +12,23 @@ impl Run for List {
     fn run(&self) -> Result<(), anyhow::Error> {
         let vers = Version::list_go_version()?;
         if vers.is_empty() {
-            log::info!(
-                "No Go is installed by goup.{}",
-                if let Ok(go_bin) = which("go") {
-                    format!(" Using system Go {}.", go_bin.to_string_lossy())
-                } else {
-                    "".to_owned()
-                }
-            );
+            println!("No Go is installed by goup.");
+            if let Ok(go_bin) = which("go") {
+                println!(" Using system Go {}.", go_bin.to_string_lossy());
+            }
         } else {
-            let mut table = Table::new();
-            table.add_row(row!["Active", "Version"]);
+            #[cfg(target_family = "windows")]
+            set_virtual_terminal(true).unwrap();
+
             for v in vers {
                 if v.active {
-                    table.add_row(row![Fycb -> "*", Fycb -> &v.version]);
+                    println!("{}", format!("* {}", v.version).green());
                 } else {
-                    table.add_row(row![Fgc -> "", Fgc -> &v.version]);
+                    println!("  {}", v.version);
                 };
             }
-            table.printstd();
         }
+
         Ok(())
     }
 }
