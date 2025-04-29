@@ -252,13 +252,12 @@ impl Version {
     }
 
     /// list `${HOME}/.goup/cache` directory items(only file, ignore directory).
-    pub fn list_cache(contain_sha256: Option<bool>) -> Result<Vec<String>, anyhow::Error> {
+    pub fn list_cache(contain_sha256: bool) -> Result<Vec<String>, anyhow::Error> {
         let goup_home = Dir::goup_home()?;
         // may be .goup or .goup/cache not exist
         if !goup_home.exists() || !goup_home.cache().exists() {
             return Ok(Vec::new());
         }
-        let contain_sha256 = contain_sha256.unwrap_or_default();
         let dir: Result<Vec<DirEntry>, _> = goup_home.cache().read_dir()?.collect();
         let mut archive_files: Vec<_> = dir?
             .iter()

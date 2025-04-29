@@ -16,47 +16,41 @@ pub struct Cache {
 #[derive(Subcommand, Clone, Debug, PartialEq)]
 enum Command {
     /// Show download archive file
-    Show(Show),
+    Show {
+        /// Contain archive sha256 file
+        #[arg(short, long, default_value_t = false)]
+        contain_sha256: bool,
+    },
+
     /// Clean download archive file
-    Clean(Clean),
-}
-
-#[derive(Args, Clone, Debug, PartialEq)]
-struct Show {
-    /// Contain archive sha256 file
-    #[arg(short, long, default_value_t = false)]
-    contain_sha256: bool,
-}
-
-#[derive(Args, Clone, Debug, PartialEq)]
-struct Clean {
-    /// Skip interact prompt.
-    #[arg(short, long, default_value_t = false)]
-    no_confirm: bool,
+    Clean {
+        /// Skip interact prompt.
+        #[arg(short, long, default_value_t = false)]
+        yes: bool,
+    },
 }
 
 impl Run for Cache {
     fn run(&self) -> Result<(), anyhow::Error> {
         match self.command {
-            Command::Show(ref arg) => {
-                Version::list_cache(Some(arg.contain_sha256))?
-                    .iter()
-                    .for_each(|v| {
-                        println!("{}", v);
-                    });
+            Command::Show { contain_sha256 } => {
+                for v in Version::list_cache(contain_sha256)? {
+                    println!("{}", v);
+                }
             }
-            Command::Clean(ref arg) => {
-                let confirmation = arg.no_confirm
+            Command::Clean { yes } => {
+                let confirmation = yes
                     || Confirm::with_theme(&ColorfulTheme::default())
                         .with_prompt("Do you want to clean cache file?")
                         .interact()?;
                 if confirmation {
                     Version::remove_cache()?;
                 } else {
-                    log::info!("Cancelled");
+                    println!("Cancelled");
                 }
             }
         }
+
         Ok(())
     }
 }
