@@ -22,7 +22,7 @@ impl Run for List {
 
             for v in vers {
                 if v.active {
-                    println!("{}", format!("* {}", v.version).green());
+                    println!("* {}", v.version.green());
                 } else {
                     println!("  {}", v.version);
                 };

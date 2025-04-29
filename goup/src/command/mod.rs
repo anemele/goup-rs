@@ -5,7 +5,6 @@ mod env;
 mod init;
 mod install;
 mod list;
-mod oneself;
 mod remove;
 mod search;
 mod set;
@@ -25,7 +24,6 @@ use self::env::Env;
 use self::init::Init;
 use self::install::Install;
 use self::list::List;
-use self::oneself::Oneself;
 use self::remove::Remove;
 use self::search::Search;
 use self::set::Set;
@@ -121,9 +119,6 @@ enum Command {
     Init(Init),
     /// Show the specified goup environment variables and values.
     Env(Env),
-    /// Modify the goup installation.
-    #[command(name = "self")]
-    Oneself(Oneself),
     /// Manage cache archive files.
     Cache(Cache),
 }
@@ -148,13 +143,13 @@ impl Run for Cli {
             })
             .filter_level(level_filter)
             .init();
+
         match &self.command {
-            Command::Install(cmd) => cmd.run(),
             Command::List(cmd) => cmd.run(),
-            Command::Remove(cmd) => cmd.run(),
             Command::Search(cmd) => cmd.run(),
+            Command::Install(cmd) => cmd.run(),
+            Command::Remove(cmd) => cmd.run(),
             Command::Set(cmd) => cmd.run(),
-            Command::Oneself(cmd) => cmd.run(),
             #[cfg(unix)]
             Command::Init(cmd) => cmd.run(),
             Command::Env(cmd) => cmd.run(),
