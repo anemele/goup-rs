@@ -21,12 +21,15 @@ impl Downloader {
         let version_dest_dir = goup_home.version(version);
 
         let mp = MultiProgress::new();
-        let spinner = mp.add(ProgressBar::new_spinner());
-        spinner.enable_steady_tick(time::Duration::from_millis(100));
+        let sp1 = mp.add(ProgressBar::new_spinner());
+        sp1.enable_steady_tick(time::Duration::from_millis(100));
+        sp1.set_message(format!("Installing {}", version));
+        let sp2 = mp.add(ProgressBar::new_spinner());
+        sp2.enable_steady_tick(time::Duration::from_millis(100));
 
         // 是否已解压成功并且存在
         if goup_home.is_dot_unpacked_success_file_exists(version) {
-            spinner.finish_with_message(format!("Already installed {}", version,));
+            sp2.finish_with_message(format!("Already installed {}", version,));
             return Ok(());
         }
 
@@ -50,24 +53,24 @@ impl Downloader {
 
         if !archive_file.exists() || !archive_sha256_file.exists() {
             // 下载压缩包
-            spinner.set_message(format!("Downloading {}", archive_url));
+            sp2.set_message(format!("Downloading {}", archive_url));
             Self::download_archive(&mp, &archive_file, &archive_url)?;
 
             // 下载压缩包sha256
-            spinner.set_message(format!("Downloading {}", archive_sha256_url));
+            sp2.set_message(format!("Downloading {}", archive_sha256_url));
             Self::download_archive_sha256(&archive_sha256_file, &archive_sha256_url)?;
         }
 
         // 校验压缩包sha256
-        spinner.set_message(format!("Verifying {}", archive_sha256_file.display()));
+        sp2.set_message(format!("Verifying {}", archive_sha256_file.display()));
         let ok = Self::verify_archive_file_sha256(&archive_file, &archive_sha256_file)?;
         if !ok {
             // TODO: here should remove the bad archive_file.
-            anyhow::bail!("NOT match");
+            anyhow::bail!("Hashsum NOT match {}", archive_sha256_file.display());
         }
 
         // 解压
-        spinner.set_message(format!("Unpacking {}", archive_file.display()));
+        sp2.set_message(format!("Unpacking {}", archive_file.display()));
         if !version_dest_dir.exists() {
             log::debug!("Create version directory: {}", version_dest_dir.display());
             fs::create_dir_all(&version_dest_dir)?
@@ -76,11 +79,11 @@ impl Downloader {
             .to_string_lossy()
             .parse::<Unpack>()?
             .unpack(&version_dest_dir, &archive_file)?;
-        spinner.finish_and_clear();
+        sp2.finish_and_clear();
 
         // 设置解压成功
         goup_home.create_dot_unpacked_success_file(version)?;
-        spinner.finish_with_message(format!("Installed {}", version));
+        sp1.finish_with_message(format!("Installed {}", version));
 
         Ok(())
     }

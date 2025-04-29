@@ -53,7 +53,6 @@ impl Run for Install {
         };
 
         let version = Version::normalize(&version);
-        println!("Installing {} ...", version);
         Downloader::install_go_version(&version)
     }
 }
