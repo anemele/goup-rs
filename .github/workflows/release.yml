@@ -21,51 +21,51 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            name: goup-x86_64-unknown-linux-gnu.tar.gz
+            os: ubuntu
+            name: .tar.gz
 
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: goup-x86_64-unknown-linux-musl.tar.gz
+            name: .tar.gz
 
           - target: i686-unknown-linux-musl
             os: ubuntu-latest
-            name: goup-i686-unknown-linux-musl.tar.gz
+            name: .tar.gz
 
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            name: goup-aarch64-unknown-linux-musl.tar.gz
+            name: .tar.gz
 
           - target: arm-unknown-linux-musleabihf
             os: ubuntu-latest
-            name: goup-arm-unknown-linux-musleabihf.tar.gz
+            name: .tar.gz
 
           - target: x86_64-apple-darwin
             os: macos-13
-            name: goup-x86_64-apple-darwin.tar.gz
+            name: .tar.gz
 
           - target: aarch64-apple-darwin
             os: macos-14
-            name: goup-aarch64-apple-darwin.tar.gz
+            name: .tar.gz
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            name: goup-x86_64-pc-windows-msvc.zip
+            name: .zip
             rustflags: -C target-feature=+crt-static
 
           - target: i686-pc-windows-msvc
             os: windows-latest
-            name: goup-i686-pc-windows-msvc.zip
+            name: .zip
             rustflags: -C target-feature=+crt-static
 
           - target: aarch64-pc-windows-msvc
             os: windows-latest
-            name: goup-aarch64-pc-windows-msvc.zip
+            name: .zip
             rustflags: -C target-feature=+crt-static
 
           - target: x86_64-unknown-freebsd
             os: ubuntu-latest
-            name: goup-x86_64-unknown-freebsd.tar.gz
+            name: .tar.gz
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -76,6 +76,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Get the version
+        run: echo "VERSION=$(echo ${GITHUB_REF#refs/tags/} | sed 's/^v//')" >> $GITHUB_ENV
+        shell: bash
 
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
@@ -115,14 +119,14 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../${{ matrix.name }} goup.exe
+          7z a ../../../goup-${{ matrix.target }}${{ env.VERSION }}${{ matrix.name }} goup.exe
           cd -
 
       - name: Post Build | Prepare artifacts [-nix]
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          tar -czvf ../../../${{ matrix.name }} goup
+          tar -czvf ../../../goup-${{ matrix.target }}${{ env.VERSION }}${{ matrix.name }} goup
           cd -
 
       - name: Release | Upload artifacts
@@ -137,7 +141,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: goup-${{ matrix.target }}.msi
-          path: target/wix/goup-${{ matrix.target }}.msi
+          path: target/wix/goup-${{ matrix.target }}${{ env.VERSION }}.msi
 
       - name: Generate a changelog [Changelog]
         uses: orhun/git-cliff-action@v4
