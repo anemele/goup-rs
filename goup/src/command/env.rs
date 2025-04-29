@@ -6,6 +6,7 @@ use super::Run;
 #[derive(Args, Debug, PartialEq)]
 pub struct Env;
 
+#[inline]
 fn print_env(key: &str, value: &str) {
     #[cfg(target_family = "windows")]
     println!("set {}={}", key, value);

@@ -20,22 +20,12 @@ pub struct Install {
     /// host that is used to download Go.
     #[arg(long, default_value_t = consts::GO_HOST.to_owned(), env = consts::GOUP_GO_HOST)]
     host: String,
-    /// only install the version, but do not switch.
-    #[arg(long, default_value_t = false)]
-    dry: bool,
 }
 
 impl Run for Install {
     fn run(&self) -> Result<(), anyhow::Error> {
-        let toolchain = self.toolchain.parse()?;
-        let version = match toolchain {
-            Toolchain::Stable => {
-                let version = Version::get_upstream_latest_go_version(&self.host)?;
-                let version = Version::normalize(&version);
-                log::info!("Installing {} ...", version);
-                Downloader::install_go_version(&version)?;
-                version
-            }
+        let version = match self.toolchain.parse()? {
+            Toolchain::Stable => Version::get_upstream_latest_go_version(&self.host)?,
             Toolchain::Unstable => {
                 let version = Version::list_upstream_go_versions_filter(
                     &self.host,
@@ -44,10 +34,7 @@ impl Run for Install {
                 let version = version
                     .last()
                     .ok_or_else(|| anyhow!("failed get latest unstable version"))?;
-                let version = Version::normalize(version);
-                log::info!("Installing {} ...", version);
-                Downloader::install_go_version(&version)?;
-                version
+                version.to_string()
             }
             Toolchain::Beta => {
                 let version = Version::list_upstream_go_versions_filter(
@@ -57,25 +44,16 @@ impl Run for Install {
                 let version = version
                     .last()
                     .ok_or_else(|| anyhow!("failed get latest beta version"))?;
-                let version = Version::normalize(version);
-                log::info!("Installing {} ...", version);
-                Downloader::install_go_version(&version)?;
-                version
+                version.to_string()
             }
-            Toolchain::Version(ver_req) => {
-                let version = Version::match_version_req(&self.host, &ver_req)?;
-                let version = Version::normalize(&version);
-                log::info!("Installing {} ...", version);
-                Downloader::install_go_version(&version)?;
-                version
-            }
+            Toolchain::Version(ver_req) => Version::match_version_req(&self.host, &ver_req)?,
             Toolchain::Nightly => {
-                anyhow::bail!("gotip is no longer supported");
+                anyhow::bail!("gotip is no supported");
             }
         };
-        if !self.dry {
-            Version::set_go_version(&version)?;
-        }
-        Ok(())
+
+        let version = Version::normalize(&version);
+        println!("Installing {} ...", version);
+        Downloader::install_go_version(&version)
     }
 }
