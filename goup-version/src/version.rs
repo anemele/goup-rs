@@ -1,7 +1,6 @@
 use std::fs;
 use std::fs::DirEntry;
 use std::ops::Deref;
-use std::process::Command;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -12,11 +11,9 @@ use semver::Op;
 use semver::Version as SemVersion;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
-use which::which;
 
 use super::Dir;
 use super::ToolchainFilter;
-use super::consts;
 
 const HTTP_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -88,10 +85,9 @@ impl Version {
 
     /// list upstream go versions if get go version failure from http then fallback use git.
     pub fn list_upstream_go_versions(host: &str) -> Result<Vec<String>, anyhow::Error> {
-        Self::list_upstream_go_versions_from_http(host).or_else(|e| {
-            which("git").map_or_else(|_| Err(e), |_| Self::list_upstream_go_versions_from_git())
-        })
+        Self::list_upstream_go_versions_from_http(host)
     }
+
     /// list upstream go versions from http.
     fn list_upstream_go_versions_from_http(host: &str) -> Result<Vec<String>, anyhow::Error> {
         Ok(Client::builder()
@@ -105,22 +101,7 @@ impl Version {
             .rev()
             .collect())
     }
-    /// list upstream go versions from git.
-    fn list_upstream_go_versions_from_git() -> Result<Vec<String>, anyhow::Error> {
-        let output = Command::new("git")
-            .args([
-                "ls-remote",
-                "--sort=version:refname",
-                "--tags",
-                &consts::go_source_git_url(),
-            ])
-            .output()?
-            .stdout;
-        Ok(Regex::new("refs/tags/go(.+)")?
-            .captures_iter(&String::from_utf8_lossy(&output))
-            .map(|capture| capture[1].to_string())
-            .collect())
-    }
+
     pub fn match_version_req(host: &str, ver_pattern: &str) -> Result<String, anyhow::Error> {
         log::debug!("version request pattern: {}", ver_pattern);
         let ver_req = VersionReq::parse(ver_pattern)?;

@@ -70,9 +70,7 @@ impl Run for Install {
                 version
             }
             Toolchain::Nightly => {
-                log::info!("Installing gotip ...");
-                Downloader::install_go_tip(self.cl.as_deref())?;
-                "gotip".to_owned()
+                anyhow::bail!("gotip is no longer supported");
             }
         };
         if !self.dry {
