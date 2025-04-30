@@ -11,9 +11,9 @@ use reqwest::header::CONTENT_LENGTH;
 use sha2::{Digest, Sha256};
 
 use goup_version::Dir;
-use goup_version::consts;
 
 use crate::archived::Unpack;
+use crate::utils;
 
 pub fn install_go_version(version: &str) -> anyhow::Result<()> {
     let goup_home = Dir::goup_home()?;
@@ -35,11 +35,11 @@ pub fn install_go_version(version: &str) -> anyhow::Result<()> {
     // download directory
     let dl_dest_dir = goup_home.cache();
     // 压缩包文件名称
-    let archive_filename = consts::go_version_archive(version);
+    let archive_filename = utils::go_version_archive(version);
     // 压缩包sha256文件名称
-    let archive_sha256_filename = consts::archive_sha256(&archive_filename);
+    let archive_sha256_filename = utils::archive_sha256(&archive_filename);
     // 压缩包url
-    let (archive_url, archive_sha256_url) = consts::archive_url(&archive_filename);
+    let (archive_url, archive_sha256_url) = utils::archive_url(&archive_filename);
 
     if !dl_dest_dir.exists() {
         log::debug!("Create download directory");
