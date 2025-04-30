@@ -2,7 +2,7 @@ use clap::Args;
 use clap::Subcommand;
 use dialoguer::Confirm;
 use dialoguer::theme::ColorfulTheme;
-use goup_version::op;
+use goup_misc::op;
 
 use super::Run;
 

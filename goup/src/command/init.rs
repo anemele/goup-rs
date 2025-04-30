@@ -1,5 +1,5 @@
 use clap::Args;
-use goup_version::Version;
+use goup_misc::Version;
 
 use super::Run;
 

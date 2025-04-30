@@ -4,8 +4,8 @@ use clap::Args;
 use colored::Colorize;
 
 use super::Run;
-use goup_version::consts;
-use goup_version::op;
+use goup_misc::consts;
+use goup_misc::op;
 
 #[derive(Args, Debug, PartialEq)]
 pub struct Search {

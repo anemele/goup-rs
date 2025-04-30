@@ -3,7 +3,7 @@ use colored::Colorize;
 use which::which;
 
 use super::Run;
-use goup_version::op;
+use goup_misc::op;
 
 #[derive(Args, Debug, PartialEq)]
 pub struct List;

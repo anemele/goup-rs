@@ -2,8 +2,8 @@
 resolver = "2"
 members = [
     "goup",
-    "goup-version",
-    "goup-downloader"
+    "goup-downloader",
+    "goup-misc",
 ]
 default-members = ["goup"]
 

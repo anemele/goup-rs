@@ -1,5 +1,5 @@
 use clap::Args;
-use goup_version::{Dir, consts};
+use goup_misc::{Dir, consts};
 
 use super::Run;
 

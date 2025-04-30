@@ -10,7 +10,7 @@ use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use sha2::{Digest, Sha256};
 
-use goup_version::Dir;
+use goup_misc::Dir;
 
 use crate::archived::Unpack;
 use crate::utils;

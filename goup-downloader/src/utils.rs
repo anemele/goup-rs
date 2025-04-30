@@ -28,7 +28,7 @@ pub fn archive_sha256(archive_filename: &str) -> String {
 /// archive_url returns returns the zip or tar.gz URL of the given Go version.
 #[inline]
 pub fn archive_url(archive_filename: &str) -> (String, String) {
-    let host = goup_version::consts::go_download_base_url();
+    let host = goup_misc::consts::go_download_base_url();
     let url0 = format!("{}/{}", host, archive_filename);
     let url1 = format!("{}.sha256", &url0);
     (url0, url1)

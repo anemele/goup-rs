@@ -1,5 +1,5 @@
 [package]
-name = "goup-version"
+name = "goup-misc"
 version.workspace =true
 authors.workspace =true
 edition.workspace =true
