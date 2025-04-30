@@ -4,8 +4,8 @@ use clap::Args;
 use colored::Colorize;
 
 use super::Run;
-use goup_version::Version;
 use goup_version::consts;
+use goup_version::op;
 
 #[derive(Args, Debug, PartialEq)]
 pub struct Search {
@@ -19,9 +19,9 @@ pub struct Search {
 impl Run for Search {
     fn run(&self) -> anyhow::Result<()> {
         let filter = self.filter.as_ref().and_then(|s| s.parse().ok());
-        let remote_versions = Version::list_upstream_go_versions_filter(&self.host, filter)?;
+        let remote_versions = op::list_upstream_go_versions_filter(&self.host, filter)?;
 
-        let local_versions = Version::list_go_version()?;
+        let local_versions = op::list_go_version()?;
         let mut v_a_map = HashMap::<String, bool>::new();
         for v in local_versions {
             v_a_map.insert(v.version, v.active);

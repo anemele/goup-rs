@@ -1,11 +1,11 @@
 use anyhow::anyhow;
 use clap::Args;
 
-use goup_downloader::Downloader;
 use goup_version::Toolchain;
 use goup_version::ToolchainFilter;
 use goup_version::Version;
 use goup_version::consts;
+use goup_version::op;
 
 use super::Run;
 
@@ -25,9 +25,9 @@ pub struct Install {
 impl Run for Install {
     fn run(&self) -> anyhow::Result<()> {
         let version = match self.toolchain.parse()? {
-            Toolchain::Stable => Version::get_upstream_latest_go_version(&self.host)?,
+            Toolchain::Stable => op::get_upstream_latest_go_version(&self.host)?,
             Toolchain::Unstable => {
-                let version = Version::list_upstream_go_versions_filter(
+                let version = op::list_upstream_go_versions_filter(
                     &self.host,
                     Some(ToolchainFilter::Unstable),
                 )?;
@@ -37,22 +37,20 @@ impl Run for Install {
                 version.to_string()
             }
             Toolchain::Beta => {
-                let version = Version::list_upstream_go_versions_filter(
-                    &self.host,
-                    Some(ToolchainFilter::Beta),
-                )?;
+                let version =
+                    op::list_upstream_go_versions_filter(&self.host, Some(ToolchainFilter::Beta))?;
                 let version = version
                     .last()
                     .ok_or_else(|| anyhow!("failed get latest beta version"))?;
                 version.to_string()
             }
-            Toolchain::Version(ver_req) => Version::match_version_req(&self.host, &ver_req)?,
+            Toolchain::Version(ver_req) => op::match_version_req(&self.host, &ver_req)?,
             Toolchain::Nightly => {
                 anyhow::bail!("gotip is no supported");
             }
         };
 
         let version = Version::normalize(&version);
-        Downloader::install_go_version(&version)
+        goup_downloader::install_go_version(&version)
     }
 }

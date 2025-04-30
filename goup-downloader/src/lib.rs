@@ -1,4 +1,4 @@
 mod archived;
 mod downloader;
 
-pub use downloader::Downloader;
+pub use downloader::install_go_version;

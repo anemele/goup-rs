@@ -3,14 +3,14 @@ use colored::Colorize;
 use which::which;
 
 use super::Run;
-use goup_version::Version;
+use goup_version::op;
 
 #[derive(Args, Debug, PartialEq)]
 pub struct List;
 
 impl Run for List {
     fn run(&self) -> anyhow::Result<()> {
-        let vers = Version::list_go_version()?;
+        let vers = op::list_go_version()?;
         if vers.is_empty() {
             println!("No Go is installed by goup.");
             if let Ok(go_bin) = which("go") {

@@ -1,7 +1,7 @@
 use clap::Args;
 use dialoguer::{Select, theme::ColorfulTheme};
 
-use goup_version::Version;
+use goup_version::op;
 
 use super::Run;
 
@@ -15,10 +15,10 @@ pub struct Set {
 impl Run for Set {
     fn run(&self) -> anyhow::Result<()> {
         if let Some(version) = &self.version {
-            return Version::set_go_version(version);
+            return op::set_go_version(version);
         }
 
-        let vers = Version::list_go_version()?;
+        let vers = op::list_go_version()?;
         if vers.is_empty() {
             anyhow::bail!("Not any go is installed, Install it with `goup install`.");
         }
@@ -36,6 +36,6 @@ impl Run for Set {
             .items(&items)
             .default(pos)
             .interact()?;
-        Version::set_go_version(items[selection])
+        op::set_go_version(items[selection])
     }
 }

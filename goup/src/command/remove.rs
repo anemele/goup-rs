@@ -1,7 +1,7 @@
 use clap::Args;
 use dialoguer::{MultiSelect, theme::ColorfulTheme};
 
-use goup_version::Version;
+use goup_version::op;
 
 use super::Run;
 
@@ -20,10 +20,10 @@ impl Run for Remove {
                 .iter()
                 .map(AsRef::as_ref)
                 .collect::<Vec<&str>>();
-            return Version::remove_go_versions(&vers);
+            return op::remove_go_versions(&vers);
         }
 
-        let vers = Version::list_go_version()?;
+        let vers = op::list_go_version()?;
         if vers.is_empty() {
             anyhow::bail!("No go is installed");
         }
@@ -40,6 +40,6 @@ impl Run for Remove {
             .into_iter()
             .map(|i| items[i])
             .collect::<Vec<&str>>();
-        Version::remove_go_versions(&vers)
+        op::remove_go_versions(&vers)
     }
 }

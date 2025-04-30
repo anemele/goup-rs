@@ -2,7 +2,7 @@ use clap::Args;
 use clap::Subcommand;
 use dialoguer::Confirm;
 use dialoguer::theme::ColorfulTheme;
-use goup_version::Version;
+use goup_version::op;
 
 use super::Run;
 
@@ -34,7 +34,7 @@ impl Run for Cache {
     fn run(&self) -> anyhow::Result<()> {
         match self.command {
             Command::Show { contain_sha256 } => {
-                for v in Version::list_cache(contain_sha256)? {
+                for v in op::list_cache(contain_sha256)? {
                     println!("{}", v);
                 }
             }
@@ -44,7 +44,7 @@ impl Run for Cache {
                         .with_prompt("Do you want to clean cache file?")
                         .interact()?;
                 if confirmation {
-                    Version::remove_cache()?;
+                    op::remove_cache()?;
                 } else {
                     println!("Cancelled");
                 }
