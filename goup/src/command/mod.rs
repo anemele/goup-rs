@@ -1,36 +1,19 @@
 mod cache;
-mod completion;
 mod env;
-#[cfg(unix)]
-mod init;
 mod install;
 mod list;
 mod remove;
 mod search;
 mod set;
 
-use chrono::Local;
-use clap::{ArgAction, Args, CommandFactory};
-use clap::{Parser, Subcommand};
-use log::LevelFilter;
+use clap::Parser;
+use goup_misc::consts;
 use shadow_rs::shadow;
 use std::env::consts::{ARCH, OS};
-use std::io::prelude::Write;
-
-use self::cache::Cache;
-use self::completion::Completion;
-use self::env::Env;
-#[cfg(unix)]
-use self::init::Init;
-use self::install::Install;
-use self::list::List;
-use self::remove::Remove;
-use self::search::Search;
-use self::set::Set;
 
 shadow!(build);
 const VERSION: &str = shadow_rs::formatcp!(
-    r#"{} 
+    r#"{}
 -------------------------------------
 {}
 
@@ -59,102 +42,74 @@ BuildArch:       {}"#,
     ARCH,
 );
 
-// run command.
-pub trait Run {
-    fn run(&self) -> anyhow::Result<()>;
-}
-
-#[derive(Args, Debug, PartialEq)]
-struct Global {
-    /// Verbose log
-    #[arg(short, long, action = ArgAction::Count)]
-    verbose: u8,
-}
-
-impl Global {
-    fn log_filter_level(&self) -> LevelFilter {
-        match self.verbose {
-            0 => LevelFilter::Info,
-            1 => LevelFilter::Debug,
-            _ => LevelFilter::Trace,
-        }
-    }
-}
-
 #[derive(Parser, Debug, PartialEq)]
 #[command(author, about, long_about = None)]
 #[command(propagate_version = true)]
 #[command(version = VERSION)]
 #[command(name = "goup")]
-pub struct Cli {
-    #[command(flatten)]
-    global: Global,
-    #[command(subcommand)]
-    command: Command,
-}
-
-#[derive(Subcommand, Debug, PartialEq)]
 #[non_exhaustive] // 表明未来还有其它元素添加
-enum Command {
+enum Cli {
     /// Install Go with a version
     #[command(visible_aliases = ["i", "add"])]
-    Install(Install),
+    Install {
+        /// toolchain name, such as 'stable', 'nightly'('tip', 'gotip'), 'unstable', 'beta' or '=1.21.4'
+        #[arg(default_value = "stable")]
+        toolchain: String,
+        /// host that is used to download Go.
+        #[arg(long, default_value_t = consts::GO_HOST.to_owned(), env = consts::GOUP_GO_HOST)]
+        host: String,
+    },
+
     /// List all installed Go
     #[command(visible_aliases = ["ls", "show"])]
-    List(List),
+    List,
+
     /// Remove the specified Go version list.
     /// If no version is provided, a prompt will show to select multiple installed Go version.
     #[command(visible_alias = "rm")]
-    Remove(Remove),
+    Remove {
+        /// target go version list.
+        version: Vec<String>,
+    },
+
     /// Search Go versions to install
-    Search(Search),
+    Search {
+        /// a filter, such as 'stable', "unstable", 'beta' or any regex string(1.22.*).
+        filter: Option<String>,
+        /// host that is used to download Go.
+        #[arg(long, default_value_t = consts::GO_HOST.to_owned(), env = consts::GOUP_GO_HOST)]
+        host: String,
+    },
+
     /// Set the default Go version to one specified.
     /// If no version is provided, a prompt will show to select a installed Go version.
     #[command(visible_alias = "use")]
-    Set(Set),
-    /// Generate the autocompletion script for the specified shell
-    Completion(Completion),
-    #[cfg(unix)]
-    /// write all necessary environment variables and values.
-    Init(Init),
+    Set {
+        /// the version to set.
+        version: Option<String>,
+    },
+
     /// Show the specified goup environment variables and values.
-    Env(Env),
-    /// Manage cache archive files.
-    Cache(Cache),
+    Env,
+
+    /// Clean download archive file
+    Clean {
+        /// Skip interact prompt.
+        #[arg(short, long, default_value_t = false)]
+        yes: bool,
+    },
 }
 
-impl Run for Cli {
-    fn run(&self) -> anyhow::Result<()> {
-        let level_filter = self.global.log_filter_level();
-        env_logger::builder()
-            .format(move |buf, record| {
-                let level = record.level();
-                let style = buf.default_level_style(level);
-                let time = Local::now().format("%Y-%m-%d %H:%M:%S");
-                let args = record.args();
-                let target = record.target();
-                if level_filter >= LevelFilter::Debug {
-                    buf.write_fmt(format_args!(
-                        "[{time} {style}{level}{style:#} {target}] {args}\n",
-                    ))
-                } else {
-                    buf.write_fmt(format_args!("[{time} {style}{level}{style:#}] {args}\n",))
-                }
-            })
-            .filter_level(level_filter)
-            .init();
-
-        match &self.command {
-            Command::List(cmd) => cmd.run(),
-            Command::Search(cmd) => cmd.run(),
-            Command::Install(cmd) => cmd.run(),
-            Command::Remove(cmd) => cmd.run(),
-            Command::Set(cmd) => cmd.run(),
-            #[cfg(unix)]
-            Command::Init(cmd) => cmd.run(),
-            Command::Env(cmd) => cmd.run(),
-            Command::Cache(cmd) => cmd.run(),
-            Command::Completion(c) => completion::print_completions(c.shell, &mut Self::command()),
-        }
+pub fn run() -> anyhow::Result<()> {
+    let cli = Cli::parse();
+    use Cli::*;
+    match cli {
+        Install { toolchain, host } => install::run(toolchain, &host),
+        List => list::run(),
+        Remove { version } => remove::run(version),
+        Search { filter, host } => search::run(filter, host),
+        Set { version } => set::run(version),
+        Env => env::run(),
+        Clean { yes } => cache::run(yes),
     }
 }
