@@ -115,11 +115,15 @@ fn download_archive<P: AsRef<Path>>(
 
     let mut cache_file = fs::File::create(dest)?;
 
-    let mut start = 0;
     const CHUNK_SIZE: u64 = 1024 * 1024;
+    let mut start = 0;
+    let mut chunk_size = 2 * CHUNK_SIZE;
+    let mut speed = 0.0;
     while start < content_length {
-        let end = start + CHUNK_SIZE;
+        let end = start + chunk_size - 1;
         let range = format!("bytes={}-{}", start, end);
+
+        let begin_time = time::Instant::now();
         let buf = client
             .get(archive_url)
             .header("User-Agent", "GOUP Client")
@@ -127,9 +131,24 @@ fn download_archive<P: AsRef<Path>>(
             .timeout(time::Duration::from_secs(30))
             .send()?
             .bytes()?;
+        let elapsed = begin_time.elapsed();
+
         cache_file.write_all(&buf)?;
-        pb.inc(buf.len() as u64);
+        let real_chunk_size = buf.len() as u64;
+        pb.inc(real_chunk_size);
+
         start = end + 1;
+
+        let real_speed = (real_chunk_size as f32) / elapsed.as_secs_f32();
+        if speed < real_speed {
+            chunk_size <<= 1;
+        } else {
+            chunk_size >>= 1;
+            if chunk_size < CHUNK_SIZE {
+                chunk_size = CHUNK_SIZE;
+            }
+        }
+        speed = real_speed;
     }
 
     pb.finish_and_clear();
