@@ -34,7 +34,7 @@ impl Version {
         if ver.starts_with("go") {
             ver.to_string()
         } else {
-            format!("go{}", ver)
+            format!("go{ver}")
         }
     }
     /// semantic go version string.
@@ -53,8 +53,8 @@ impl Version {
             .or_else(|| ver.find("rc"))
             .map_or_else(
                 || match count_dot(ver) {
-                    0 => format!("{}.0.0", ver),
-                    1 => format!("{}.0", ver),
+                    0 => format!("{ver}.0.0"),
+                    1 => format!("{ver}.0"),
                     _ => ver.to_string(),
                 },
                 |idx| {

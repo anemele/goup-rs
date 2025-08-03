@@ -73,6 +73,7 @@ enum Cli {
     },
 
     /// Search Go versions to install
+    #[command(visible_aliases = ["s", "lr"])]
     Search {
         /// a filter, such as 'stable', "unstable", 'beta' or any regex string(1.22.*).
         filter: Option<String>,

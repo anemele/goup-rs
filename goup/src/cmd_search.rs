@@ -19,7 +19,7 @@ pub(super) fn run(filter: Option<String>, host: String) -> anyhow::Result<()> {
 
     for v in remote_versions {
         if !v_a_map.contains_key(&v) {
-            println!("  {}", v);
+            println!("  {v}");
             continue;
         }
         if v_a_map[&v] {

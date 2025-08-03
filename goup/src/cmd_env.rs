@@ -3,7 +3,7 @@ use goup_misc::{Dir, consts};
 #[inline]
 fn print_env(key: &str, value: &str) {
     #[cfg(windows)]
-    println!("set {}={}", key, value);
+    println!("set {key}={value}");
     #[cfg(unix)]
     println!("{}={}", key, value);
 }

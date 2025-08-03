@@ -22,11 +22,11 @@ pub fn install_go_version(version: &str) -> anyhow::Result<()> {
     let mp = MultiProgress::new();
     let sp = mp.add(ProgressBar::new_spinner());
     sp.enable_steady_tick(time::Duration::from_millis(100));
-    sp.set_message(format!("Installing {}", version));
+    sp.set_message(format!("Installing {version}"));
 
     // 是否已解压成功并且存在
     if goup_home.is_dot_unpacked_success_file_exists(version) {
-        sp.finish_with_message(format!("Already installed {}", version));
+        sp.finish_with_message(format!("Already installed {version}"));
         return Ok(());
     }
 
@@ -50,11 +50,11 @@ pub fn install_go_version(version: &str) -> anyhow::Result<()> {
 
     if !archive_file.exists() || !archive_sha256_file.exists() {
         // 下载压缩包
-        sp.set_message(format!("Downloading {}", archive_url));
+        sp.set_message(format!("Downloading {archive_url}"));
         download_archive(&mp, &archive_file, &archive_url)?;
 
         // 下载压缩包sha256
-        sp.set_message(format!("Downloading {}", archive_sha256_url));
+        sp.set_message(format!("Downloading {archive_sha256_url}"));
         download_archive_sha256(&archive_sha256_file, &archive_sha256_url)?;
     }
 
@@ -80,7 +80,7 @@ pub fn install_go_version(version: &str) -> anyhow::Result<()> {
 
     // 设置解压成功
     goup_home.create_dot_unpacked_success_file(version)?;
-    sp.finish_with_message(format!("Installed {}", version));
+    sp.finish_with_message(format!("Installed {version}"));
 
     Ok(())
 }
@@ -121,7 +121,7 @@ fn download_archive<P: AsRef<Path>>(
     let mut speed = 0.0;
     while start < content_length {
         let end = start + chunk_size - 1;
-        let range = format!("bytes={}-{}", start, end);
+        let range = format!("bytes={start}-{end}");
 
         let begin_time = time::Instant::now();
         let buf = client

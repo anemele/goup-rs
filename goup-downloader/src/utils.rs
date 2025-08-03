@@ -15,21 +15,21 @@ pub fn go_version_archive(version: &str) -> String {
         _ => env::consts::ARCH,
     };
     let ext = if os == "windows" { "zip" } else { "tar.gz" };
-    format!("{}.{}-{}.{}", version, os, arch, ext)
+    format!("{version}.{os}-{arch}.{ext}")
 }
 
 /// archive_sha256 returns `{archive}.sha256`
 /// go1.21.5.linux-amd64.tar.gz.sha256, go1.21.5.windows-amd64.zip.sha256
 #[inline]
 pub fn archive_sha256(archive_filename: &str) -> String {
-    format!("{}.sha256", archive_filename)
+    format!("{archive_filename}.sha256")
 }
 
 /// archive_url returns returns the zip or tar.gz URL of the given Go version.
 #[inline]
 pub fn archive_url(archive_filename: &str) -> (String, String) {
     let host = goup_misc::consts::go_download_base_url();
-    let url0 = format!("{}/{}", host, archive_filename);
+    let url0 = format!("{host}/{archive_filename}");
     let url1 = format!("{}.sha256", &url0);
     (url0, url1)
 }

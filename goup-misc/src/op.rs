@@ -53,7 +53,7 @@ pub fn list_upstream_go_versions_filter(
                 r#"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*))?(?:beta(?:0|[1-9]\d*))"#
                     .to_string()
             }
-            ToolchainFilter::Filter(s) => format!("(.*{}.*)", s),
+            ToolchainFilter::Filter(s) => format!("(.*{s}.*)"),
         },
     );
     let re = Regex::new(&re)?;
@@ -72,7 +72,7 @@ pub fn list_upstream_go_versions(host: &str) -> anyhow::Result<Vec<String>> {
     let v = Client::builder()
         .timeout(time::Duration::from_secs(10))
         .build()?
-        .get(format!("{}/dl/?mode=json&include=all", host))
+        .get(format!("{host}/dl/?mode=json&include=all"))
         .send()?
         .json::<Vec<GoRelease>>()?
         .into_iter()
@@ -84,7 +84,7 @@ pub fn list_upstream_go_versions(host: &str) -> anyhow::Result<Vec<String>> {
 }
 
 pub fn match_version_req(host: &str, ver_pattern: &str) -> anyhow::Result<String> {
-    log::debug!("version request pattern: {}", ver_pattern);
+    log::debug!("version request pattern: {ver_pattern}");
     let ver_req = VersionReq::parse(ver_pattern)?;
     // 是否是精确匹配, 如果是则直接返回
     if ver_req.comparators.iter().all(|v| v.op == Op::Exact) {
@@ -107,7 +107,7 @@ pub fn get_upstream_latest_go_version(host: &str) -> anyhow::Result<String> {
     let body = Client::builder()
         .timeout(time::Duration::from_secs(10))
         .build()?
-        .get(format!("{}/VERSION?m=text", host))
+        .get(format!("{host}/VERSION?m=text"))
         .send()?
         .text()?;
     let v = body
@@ -187,7 +187,7 @@ pub fn remove_go_version(version: &str) -> anyhow::Result<()> {
 
     if let Some(cur) = current_go_version()? {
         if cur == version {
-            log::warn!("{} is the active version.", version);
+            log::warn!("{version} is the active version.");
         }
     }
 
