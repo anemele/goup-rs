@@ -9,10 +9,10 @@ pub const GO_DOWNLOAD_BASE_URL: &str = "https://dl.google.com/go";
 
 #[inline]
 fn get_var_or_else(key: &str, val: &str) -> String {
-    if let Ok(s) = env::var(key) {
-        if !s.is_empty() {
-            return s;
-        }
+    if let Ok(s) = env::var(key)
+        && !s.is_empty()
+    {
+        return s;
     }
     val.to_string()
 }

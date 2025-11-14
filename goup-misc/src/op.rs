@@ -185,10 +185,10 @@ pub fn remove_go_version(version: &str) -> anyhow::Result<()> {
         fs::remove_dir_all(&version_dir)?;
     }
 
-    if let Some(cur) = current_go_version()? {
-        if cur == version {
-            log::warn!("{version} is the active version.");
-        }
+    if let Some(cur) = current_go_version()?
+        && cur == version
+    {
+        log::warn!("{version} is the active version.");
     }
 
     Ok(())
