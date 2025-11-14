@@ -8,7 +8,7 @@ members = [
 default-members = ["goup"]
 
 [workspace.package]
-version = "0.12.5"
+version = "0.12.6"
 authors = ["thinkgo <thinkgo@aliyun.com>", "Jason Swift <anemele@outlook.com>"]
 edition = "2024"
 rust-version = "1.88"
@@ -28,12 +28,12 @@ repository = "https://github.com/anemele/goup-rs"
 [workspace.dependencies]
 anyhow = "1.0"
 log = "0.4"
-regex = "1.11"
+regex = "1.12"
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls-native-roots", "json"] }
 serde = {version = "1", features = ["derive"]}
 serde_json = "1"
-which = "7.0"
-indicatif = "0.17.8"
+which = "8.0"
+indicatif = "0.18.3"
 
 # dev
 tempfile = "3"

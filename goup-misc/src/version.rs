@@ -1,6 +1,5 @@
 use std::fs;
 
-use anyhow::Result;
 use semver::Version as SemVersion;
 
 use crate::Dir;
@@ -8,7 +7,7 @@ use crate::Dir;
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Version {
     // Version: 1.21.1
-    pub version: String,
+    pub version: SemVersion,
     // active or not
     pub active: bool,
 }
@@ -45,7 +44,7 @@ impl Version {
     /// 1.21-rc2    -> 1.21.0-rc2
     /// 1.21.1-rc2  -> 1.21.1-rc2
     /// 1.21.1      -> 1.21.1
-    pub fn semantic(ver: &str) -> Result<SemVersion> {
+    pub fn semantic(ver: &str) -> anyhow::Result<SemVersion> {
         let count_dot = |name: &str| name.chars().filter(|&v| v == '.').count();
         let name = ver
             .find("alpha")

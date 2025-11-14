@@ -12,6 +12,8 @@ use shadow_rs::shadow;
 use std::env::consts::{ARCH, OS};
 
 shadow!(build);
+// rust-analyzer: attemping to use nonexistent positional argument `12`
+// what happened? why lsp gives this error, but compiler not?
 const VERSION: &str = shadow_rs::formatcp!(
     r#"{}
 -------------------------------------

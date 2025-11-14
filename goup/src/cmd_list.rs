@@ -16,7 +16,7 @@ pub(super) fn run() -> anyhow::Result<()> {
 
         for v in vers {
             if v.active {
-                println!("* {}", v.version.green());
+                println!("* {}", v.version.to_string().green());
             } else {
                 println!("  {}", v.version);
             };

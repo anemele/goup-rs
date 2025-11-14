@@ -143,7 +143,7 @@ pub fn list_go_version() -> anyhow::Result<Vec<Version>> {
                 return None;
             }
             Some(Version {
-                version: ver.trim_start_matches("go").into(),
+                version: Version::semantic(ver.trim_start_matches("go")).ok()?,
                 active: current.is_ok_and(|vv| vv == goup_home.version_go(ver).deref()),
             })
         })
@@ -195,7 +195,7 @@ pub fn remove_go_version(version: &str) -> anyhow::Result<()> {
 }
 
 /// remove multiple go version, if it is current active go version, will ignore deletion.
-pub fn remove_go_versions(vers: &[&str]) -> anyhow::Result<()> {
+pub fn remove_go_versions(vers: &[String]) -> anyhow::Result<()> {
     let spinner = ProgressBar::new_spinner();
     spinner.enable_steady_tick(time::Duration::from_millis(100));
 

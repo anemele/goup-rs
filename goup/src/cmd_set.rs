@@ -12,10 +12,10 @@ pub(super) fn run(version: Option<String>) -> anyhow::Result<()> {
         anyhow::bail!("Not any go is installed, Install it with `goup install`.");
     }
 
-    let mut items = Vec::new();
+    let mut items = vec![];
     let mut pos = 0;
     for (i, v) in vers.iter().enumerate() {
-        items.push(v.version.as_ref());
+        items.push(v.version.to_string());
         if v.active {
             pos = i;
         }
@@ -25,5 +25,5 @@ pub(super) fn run(version: Option<String>) -> anyhow::Result<()> {
         .items(&items)
         .default(pos)
         .interact()?;
-    op::set_go_version(items[selection])
+    op::set_go_version(&items[selection])
 }

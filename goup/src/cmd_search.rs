@@ -11,7 +11,7 @@ pub(super) fn run(filter: Option<String>, host: String) -> anyhow::Result<()> {
     let local_versions = op::list_go_version()?;
     let mut v_a_map = HashMap::<String, bool>::new();
     for v in local_versions {
-        v_a_map.insert(v.version, v.active);
+        v_a_map.insert(v.version.to_string(), v.active);
     }
 
     #[cfg(windows)]
